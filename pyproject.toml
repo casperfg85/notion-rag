@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notion-rag"
+version = "0.1.0"
+description = "A Retrieval-Augmented Generation (RAG) system for Notion workspaces"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pydantic>=2.0.0",
+    "notion-client>=2.0.0",
+    "PyYAML>=6.0",
+    "lancedb>=0.3.0",
+    "litellm>=1.0.0",
+    "agno>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=22.0.0",
+    "isort>=5.0.0",
+    "flake8>=4.0.0",
+]
+
+[project.scripts]
+notion-pull = "scripts.pull:main"
+notion-parse = "scripts.parse:main"
+notion-index = "scripts.index:main"
+notion-rag = "test_rag:main"
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["src*", "scripts*"]
+
+[tool.setuptools.package-dir]
+"" = "."
+"src" = "src"
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 100

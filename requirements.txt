@@ -1,0 +1,14 @@
+# Core dependencies for Notion RAG system
+pydantic>=2.0.0
+notion-client>=2.0.0
+PyYAML>=6.0
+lancedb>=0.3.0
+litellm>=1.0.0
+agno>=0.1.0
+
+# Additional dependencies that may be required by the above packages
+# (these will be automatically installed as dependencies)
+# requests - HTTP library used by notion-client
+# numpy - Used by lancedb for vector operations
+# pandas - May be used by lancedb
+# pyarrow - Required by lancedb for data storage
