@@ -1,6 +1,6 @@
 # Notion RAG
 
-A Retrieval-Augmented Generation (RAG) system built on top of Notion, using LanceDB for vector storage and LiteLLM for embeddings and chat completion.
+A Retrieval-Augmented Generation (RAG) system built on top of Notion, using LanceDB for vector storage and agno for intelligent chat interactions.
 
 ## Features
 
@@ -9,8 +9,9 @@ A Retrieval-Augmented Generation (RAG) system built on top of Notion, using Lanc
 - **Multiple Embedding Providers**: Support for OpenAI and Google via LiteLLM
 - **Resumable Data Pulls**: Stateful pulling with error recovery
 - **Structured Parsing**: Convert Notion content to clean, searchable format
-- **RAG Chat Interface**: Interactive chat with your Notion content
+- **Intelligent RAG Chat**: Interactive chat powered by agno agent with source citations
 - **Entity Isolation**: Process multiple Notion trees with complete data isolation
+- **Source Attribution**: Automatic citation of Notion pages in responses
 
 ## Quick Start
 
@@ -33,6 +34,7 @@ Create a `config.yaml` file:
 notion_token: "your_notion_integration_token"
 data_dir: "data"
 log_level: "INFO"
+model_id: "openai/gpt-4"
 ```
 
 Set environment variables:
@@ -43,7 +45,7 @@ export NOTION_TOKEN="your_notion_integration_token"
 # For embeddings (choose one):
 export OPENAI_API_KEY="your_openai_api_key"
 # OR
-export GOOGLE_API_KEY="your_google_api_key"
+export GEMINI_API_KEY="your_gemini_api_key"
 ```
 
 ### 3. Run the Pipeline
@@ -131,6 +133,7 @@ max_retries: 3                       # Max retries for failed API calls
 backoff_factor: 2.0                  # Exponential backoff multiplier
 max_concurrent: 5                    # Max concurrent API requests
 log_level: "INFO"                    # Logging level (DEBUG, INFO, WARNING, ERROR)
+model_id: "openai/gpt-4"            # Default model for RAG chat
 ```
 
 ### Environment Variables
@@ -251,7 +254,7 @@ This ensures complete isolation between different Notion trees.
 ### Common Issues
 
 1. **"Notion API returned 401"**: Check your integration token and page permissions
-2. **"No embedding API key found"**: Set either `OPENAI_API_KEY` or `GOOGLE_API_KEY`
+2. **"No embedding API key found"**: Set either `OPENAI_API_KEY` or `GEMINI_API_KEY`
 3. **"Raw data not found"**: Run `python scripts/pull.py --root_entity_id <ID>` first
 4. **"Parsed data not found"**: Run `python scripts/parse.py --root_entity_id <ID>` after pulling
 
@@ -264,6 +267,37 @@ export LOG_LEVEL="DEBUG"
 python scripts/pull.py --root_entity_id <ENTITY_ID>
 ```
 
+## RAG Chat Interface
+
+The system provides an intelligent chat interface powered by the agno agent:
+
+```bash
+python test_rag.py --root_entity_id <NOTION_PAGE_ID>
+```
+
+Features:
+- Semantic search through Notion content
+- Automatic source citation with page titles and URLs
+- Contextual responses based on retrieved content
+- Interactive Q&A with your Notion knowledge base
+
+Example interaction:
+```
+Question: What are the key features of our project?
+[Agent searches through Notion pages]
+[Provides comprehensive answer with citations]
+[Lists all referenced pages with URLs]
+```
+
 ## TODO
-- Remove relative imports
-- Multi-modal search
+- Fix pull state to actually work properly when there are failures
+    - only mark a node successful when all children are successful and no failures
+    - store base_path and entity_type in pull state for proper resumption
+- Multi modal search
+    - Figure out how to embed non text types
+    - Maybe handle more notion block types (currenlty not all known types are parsed)
+    - Search by image
+- Properly handle JSON attachments in parser because detected by the globbing function
+- Handle parsing and indexing of properties better
+    - Some property types are still unsupported
+    - The current way of handling properties with the same name but different types is inelegant

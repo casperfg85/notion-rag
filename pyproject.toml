@@ -32,12 +32,8 @@ notion-index = "scripts.index:main"
 notion-rag = "test_rag:main"
 
 [tool.setuptools.packages.find]
-where = ["src", "."]
-include = ["src*", "scripts*"]
-
-[tool.setuptools.package-dir]
-"" = "."
-"src" = "src"
+where = ["."]
+include = ["notion_rag*", "scripts*"]
 
 [tool.black]
 line-length = 100

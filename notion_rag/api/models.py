@@ -1,11 +1,13 @@
-from typing import Optional, List, Dict, Any, Union, Literal
-from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Literal, Optional, Type
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class NotionObject(BaseModel):
     """Base Notion object"""
+
     object: str
     id: str
     created_time: Optional[datetime] = None
@@ -14,6 +16,7 @@ class NotionObject(BaseModel):
 
 class NotionParent(BaseModel):
     """Parent reference in Notion objects"""
+
     type: str
     page_id: Optional[str] = None
     database_id: Optional[str] = None
@@ -23,8 +26,18 @@ class NotionParent(BaseModel):
 
 class TextContent(BaseModel):
     """Text content within rich text"""
+
     content: str
     link: Optional[Dict[str, str]] = None
+
+
+class NotionEntityType(str, Enum):
+    """Types of Notion entities"""
+
+    BLOCK = "block"
+    PAGE = "page"
+    DATABASE = "database"
+    LIST = "list"
 
 
 class MentionType(str, Enum):
@@ -39,6 +52,7 @@ class MentionType(str, Enum):
 
 class MentionObject(BaseModel):
     """Mention object in rich text"""
+
     type: MentionType
     user: Optional[Dict[str, Any]] = None
     page: Optional[Dict[str, str]] = None
@@ -46,11 +60,22 @@ class MentionObject(BaseModel):
     date: Optional[Dict[str, Any]] = None
     link_preview: Optional[Dict[str, str]] = None
     template_mention: Optional[Dict[str, str]] = None
-    link_mention: Optional[Dict[str, str]] = None
+    link_mention: Optional[Dict[str, Any]] = None
+
+    @model_validator(mode="before")
+    def coerce_link_mention_fields(cls, values):
+        link_mention = values.get("link_mention")
+        if isinstance(link_mention, dict):
+            for field in ("padding", "height"):
+                if field in link_mention and link_mention[field] is not None:
+                    link_mention[field] = str(link_mention[field])
+            values["link_mention"] = link_mention
+        return values
 
 
 class Annotations(BaseModel):
     """Text annotations"""
+
     bold: bool = False
     italic: bool = False
     strikethrough: bool = False
@@ -61,6 +86,7 @@ class Annotations(BaseModel):
 
 class EquationObject(BaseModel):
     """Equation object in rich text"""
+
     expression: str
 
 
@@ -72,6 +98,7 @@ class RichTextType(str, Enum):
 
 class RichTextObject(BaseModel):
     """Rich text object in Notion"""
+
     type: RichTextType
     text: Optional[TextContent] = None
     mention: Optional[MentionObject] = None
@@ -88,6 +115,7 @@ class FileType(str, Enum):
 
 class FileAttachmentType(str, Enum):
     """Types of file attachments in Notion blocks"""
+
     FILE = "file"
     IMAGE = "image"
     VIDEO = "video"
@@ -97,17 +125,20 @@ class FileAttachmentType(str, Enum):
 
 class InternalFile(BaseModel):
     """Internal file hosted by Notion"""
+
     url: str
     expiry_time: datetime
 
 
 class ExternalFile(BaseModel):
     """External file reference"""
+
     url: str
 
 
 class FileObject(BaseModel):
     """File object in Notion"""
+
     type: FileType
     file: Optional[InternalFile] = None
     external: Optional[ExternalFile] = None
@@ -147,11 +178,13 @@ class BlockType(str, Enum):
     COLUMN_LIST = "column_list"
     TEMPLATE = "template"
     TABLE_OF_CONTENTS = "table_of_contents"
+    LINK_TO_PAGE = "link_to_page"
     UNSUPPORTED = "unsupported"
 
 
 class UserObject(BaseModel):
     """User object reference"""
+
     object: Literal["user"]
     id: str
     name: Optional[str] = None
@@ -163,28 +196,33 @@ class UserObject(BaseModel):
 
 class RichTextBlock(BaseModel):
     """Block content with rich text"""
+
     rich_text: List[RichTextObject] = Field(default_factory=list)
     color: str = "default"
 
 
 class HeadingBlock(RichTextBlock):
     """Heading block content"""
+
     is_toggleable: bool = False
 
 
 class ListItemBlock(RichTextBlock):
     """List item block content"""
+
     children: Optional[List[Dict[str, Any]]] = None
 
 
 class ToDoBlock(RichTextBlock):
     """To-do block content"""
+
     checked: bool = False
     children: Optional[List[Dict[str, Any]]] = None
 
 
 class CodeBlock(BaseModel):
     """Code block content"""
+
     rich_text: List[RichTextObject] = Field(default_factory=list)
     caption: List[RichTextObject] = Field(default_factory=list)
     language: str = "plain text"
@@ -192,22 +230,26 @@ class CodeBlock(BaseModel):
 
 class CalloutBlock(RichTextBlock):
     """Callout block content"""
+
     icon: Optional[Dict[str, Any]] = None
     children: Optional[List[Dict[str, Any]]] = None
 
 
 class ChildPageBlock(BaseModel):
     """Child page block content"""
+
     title: str
 
 
 class ChildDatabaseBlock(BaseModel):
     """Child database block content"""
+
     title: str
 
 
 class TableBlock(BaseModel):
     """Table block content"""
+
     table_width: int
     has_column_header: bool = False
     has_row_header: bool = False
@@ -216,51 +258,59 @@ class TableBlock(BaseModel):
 
 class TableRowBlock(BaseModel):
     """Table row block content"""
+
     cells: List[List[RichTextObject]] = Field(default_factory=list)
 
 
 class LinkPreviewBlock(BaseModel):
     """Link preview block content"""
+
     url: str
 
 
 class SyncedFromBlock(BaseModel):
     """Synced from block reference"""
+
     block_id: Optional[str] = None
 
 
 class SyncedBlock(BaseModel):
     """Synced block content"""
+
     synced_from: Optional[SyncedFromBlock] = None
     children: Optional[List[Dict[str, Any]]] = None
 
 
 class BookmarkBlock(BaseModel):
     """Bookmark block content"""
+
     url: str
     caption: List[RichTextObject] = Field(default_factory=list)
 
 
 class EmbedBlock(BaseModel):
     """Embed block content"""
+
     url: str
     caption: List[RichTextObject] = Field(default_factory=list)
 
 
 class EquationBlock(BaseModel):
     """Equation block content"""
+
     expression: str
 
 
 class NotionBlock(NotionObject):
     """Notion block object"""
+
     type: BlockType
     has_children: bool
     archived: bool
     parent: Optional[NotionParent] = None
     created_by: Optional[UserObject] = None
     last_edited_by: Optional[UserObject] = None
-    
+
     # Block-specific content (dynamic based on type)
     paragraph: Optional[RichTextBlock] = None
     heading_1: Optional[HeadingBlock] = None
@@ -292,7 +342,9 @@ class NotionBlock(NotionObject):
     column: Optional[Dict[str, Any]] = None
     column_list: Optional[Dict[str, Any]] = None
     template: Optional[Dict[str, Any]] = None
-    table_of_contents: Optional[Dict[str, Any]] = Field(default_factory=dict)  # Empty object
+    table_of_contents: Optional[Dict[str, Any]] = Field(
+        default_factory=dict
+    )  # Empty object
     unsupported: Optional[Dict[str, Any]] = None
 
 
@@ -304,6 +356,7 @@ class IconType(str, Enum):
 
 class IconObject(BaseModel):
     """Icon object for pages and databases"""
+
     type: IconType
     emoji: Optional[str] = None
     external: Optional[ExternalFile] = None
@@ -336,6 +389,7 @@ class PropertyType(str, Enum):
 
 class SelectOption(BaseModel):
     """Select option object"""
+
     id: str
     name: str
     color: str
@@ -343,6 +397,7 @@ class SelectOption(BaseModel):
 
 class DateObject(BaseModel):
     """Date object in properties"""
+
     start: str  # ISO 8601 date string
     end: Optional[str] = None
     time_zone: Optional[str] = None
@@ -350,6 +405,7 @@ class DateObject(BaseModel):
 
 class FormulaResult(BaseModel):
     """Formula result object"""
+
     type: str
     string: Optional[str] = None
     number: Optional[float] = None
@@ -359,11 +415,13 @@ class FormulaResult(BaseModel):
 
 class RelationObject(BaseModel):
     """Relation object"""
+
     id: str
 
 
 class RollupResult(BaseModel):
     """Rollup result object"""
+
     type: str
     number: Optional[float] = None
     date: Optional[DateObject] = None
@@ -373,124 +431,176 @@ class RollupResult(BaseModel):
 
 class UniqueIdObject(BaseModel):
     """Unique ID object"""
+
     number: int
     prefix: Optional[str] = None
 
 
+class PropertyValueMixin:
+    """Mixin to add type-specific behavior to PropertyValue"""
+
+    def get_value(self) -> Any:
+        """Get the actual value based on the property type"""
+        return getattr(self, self.type.value)  # type: ignore[attr-defined]
+
+    def get_text(self) -> str:
+        """Get text representation of the property value"""
+        value = self.get_value()
+        if isinstance(value, list):
+            return " ".join(str(item) for item in value)
+        return str(value) if value is not None else ""
+
+
 class PropertyValue(BaseModel):
     """Base property value"""
+
     id: str
     type: PropertyType
-    
+
+    @classmethod
+    def get_property_class(cls, type_value: str) -> Type["PropertyValue"]:
+        """Get the correct property class based on type"""
+        # Convert type_value to class name (e.g., 'title' -> 'TitleProperty')
+        class_name = f'{type_value.title().replace('_', '')}Property'
+
+        # Find the class in the current module
+        for subclass in cls.__subclasses__():
+            if subclass.__name__ == class_name:
+                return subclass
+
+        return cls  # Fallback to base class if not found
+
 
 class TitleProperty(PropertyValue):
     """Title property value"""
+
     title: List[RichTextObject] = Field(default_factory=list)
 
 
 class RichTextProperty(PropertyValue):
     """Rich text property value"""
+
     rich_text: List[RichTextObject] = Field(default_factory=list)
 
 
 class NumberProperty(PropertyValue):
     """Number property value"""
+
     number: Optional[float] = None
 
 
 class SelectProperty(PropertyValue):
     """Select property value"""
+
     select: Optional[SelectOption] = None
 
 
 class MultiSelectProperty(PropertyValue):
     """Multi-select property value"""
+
     multi_select: List[SelectOption] = Field(default_factory=list)
 
 
 class DateProperty(PropertyValue):
     """Date property value"""
+
     date: Optional[DateObject] = None
 
 
 class PeopleProperty(PropertyValue):
     """People property value"""
+
     people: List[UserObject] = Field(default_factory=list)
 
 
 class FilesProperty(PropertyValue):
     """Files property value"""
+
     files: List[FileObject] = Field(default_factory=list)
 
 
 class CheckboxProperty(PropertyValue):
     """Checkbox property value"""
+
     checkbox: bool = False
 
 
 class UrlProperty(PropertyValue):
     """URL property value"""
+
     url: Optional[str] = None
 
 
 class EmailProperty(PropertyValue):
     """Email property value"""
+
     email: Optional[str] = None
 
 
 class PhoneNumberProperty(PropertyValue):
     """Phone number property value"""
+
     phone_number: Optional[str] = None
 
 
 class FormulaProperty(PropertyValue):
     """Formula property value"""
+
     formula: FormulaResult
 
 
 class RelationProperty(PropertyValue):
     """Relation property value"""
+
     relation: List[RelationObject] = Field(default_factory=list)
     has_more: bool = False
 
 
 class RollupProperty(PropertyValue):
     """Rollup property value"""
+
     rollup: RollupResult
 
 
 class CreatedTimeProperty(PropertyValue):
     """Created time property value"""
+
     created_time: datetime
 
 
 class CreatedByProperty(PropertyValue):
     """Created by property value"""
+
     created_by: UserObject
 
 
 class LastEditedTimeProperty(PropertyValue):
     """Last edited time property value"""
+
     last_edited_time: datetime
 
 
 class LastEditedByProperty(PropertyValue):
     """Last edited by property value"""
+
     last_edited_by: UserObject
 
 
 class StatusProperty(PropertyValue):
     """Status property value"""
+
     status: Optional[SelectOption] = None
 
 
 class UniqueIdProperty(PropertyValue):
     """Unique ID property value"""
+
     unique_id: UniqueIdObject
 
 
 class NotionPage(NotionObject):
     """Notion page object"""
+
     parent: NotionParent
     archived: bool
     properties: Dict[str, PropertyValue]
@@ -501,13 +611,27 @@ class NotionPage(NotionObject):
     cover: Optional[FileObject] = None
     icon: Optional[IconObject] = None
 
+    @model_validator(mode="before")
+    def convert_properties(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert properties to their correct types based on type field"""
+        if "properties" in values:
+            converted_properties = {}
+            for name, prop_data in values["properties"].items():
+                prop_type = prop_data.get("type")
+                if prop_type:
+                    property_class = PropertyValue.get_property_class(prop_type)
+                    converted_properties[name] = property_class(**prop_data)
+            values["properties"] = converted_properties
+        return values
+
 
 class DatabasePropertySchema(BaseModel):
     """Database property schema definition"""
+
     id: str
     name: str
     type: PropertyType
-    
+
     # Type-specific configurations
     title: Optional[Dict[str, Any]] = None
     rich_text: Optional[Dict[str, Any]] = None
@@ -534,6 +658,7 @@ class DatabasePropertySchema(BaseModel):
 
 class NotionDatabase(NotionObject):
     """Notion database object"""
+
     title: List[RichTextObject] = Field(default_factory=list)
     description: List[RichTextObject] = Field(default_factory=list)
     properties: Dict[str, DatabasePropertySchema]
@@ -550,17 +675,19 @@ class NotionDatabase(NotionObject):
 
 class NotionBlockList(BaseModel):
     """Response from blocks.children.list"""
+
     object: str
     results: List[NotionBlock]
     next_cursor: Optional[str] = None
     has_more: bool
-    type: str = 'block'
+    type: str = "block"
 
 
 class NotionDatabaseQuery(BaseModel):
     """Response from databases.query"""
+
     object: str
     results: List[NotionPage]
     next_cursor: Optional[str] = None
     has_more: bool
-    type: str = 'page'
+    type: str = "page"

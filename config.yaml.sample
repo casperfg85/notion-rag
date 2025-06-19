@@ -1,0 +1,16 @@
+# Local development configuration
+# Production values should be set via environment variables
+
+notion_token: 'NOTION_TOKEN'
+openai_api_key: 'OPENAI_API_KEY'
+gemini_api_key: 'GEMINI_API_KEY'
+data_dir: 'data'
+
+# API settings
+api_delay: 1.0
+max_retries: 3
+backoff_factor: 2.0
+max_concurrent: 5
+
+# Logging
+log_level: 'INFO'

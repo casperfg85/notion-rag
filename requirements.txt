@@ -4,7 +4,17 @@ notion-client>=2.0.0
 PyYAML>=6.0
 lancedb>=0.3.0
 litellm>=1.0.0
+google-generativeai
 agno>=0.1.0
+
+# Development dependencies
+pre-commit>=3.6.0
+ruff>=0.3.0
+mypy>=1.8.0
+types-requests>=2.31.0.20240125
+types-PyYAML>=6.0.12.12
+types-setuptools>=69.0.0.20240302
+types-urllib3>=1.26.25.14
 
 # Additional dependencies that may be required by the above packages
 # (these will be automatically installed as dependencies)
